@@ -34,18 +34,58 @@ pub struct Version {
 pub enum ToSemverError {
     HasEpoch,
     HasPost,
+    TooManyFields,
 }
 
 impl Version {
     /// Get the version in semver format `version-pre`, if no post-release info
     pub fn to_semver(&self) -> Result<String, ToSemverError> {
-        unimplemented!() // TODO: Convert to semver
+        if self.epoch != 0 {
+            Err(ToSemverError::HasEpoch)
+        } else if !self.post.is_empty() {
+            Err(ToSemverError::HasPost)
+        } else if self.version.len() > 3 {
+            Err(ToSemverError::TooManyFields)
+        } else {
+            let mut version = String::new();
+            for (i, field) in self.version.iter().enumerate() {
+                if i > 0 {
+                    version.push('.');
+                }
+                write!(version, "{}", field).unwrap();
+            }
+            if !self.pre.is_empty() {
+                version.push('-');
+                for (i, field) in self.pre.iter().enumerate() {
+                    if i > 0 {
+                        version.push('.');
+                    }
+                    write!(version, "{}", field).unwrap();
+                }
+            }
+            Ok(version)
+        }
     }
 }
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!() // TODO: Print version
+        if self.epoch > 0 {
+            write!(f, "{}:", self.epoch)?;
+        }
+        for (i, field) in self.version.iter().enumerate() {
+            if i > 0 {
+                write!(f, ".")?;
+            }
+            write!(f, "{}", field)?;
+        }
+        if self.version.is_empty() {
+            write!(f, "0")?;
+        }
+        for field in self.pre.iter().chain(self.post.iter()) {
+            write!(f, ".{}", field)?;
+        }
+        Ok(())
     }
 }
 
