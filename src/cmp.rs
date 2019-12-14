@@ -63,12 +63,58 @@ fn compare_alpha(a: &[u8], b: &[u8]) -> std::cmp::Ordering {
     }
 }
 
+fn position<T, F>(slice: &[T], start: usize, pred: F) -> usize
+where F: FnMut(&T) -> bool {
+    slice[start ..].iter().position(pred).map(|idx| idx + start).unwrap_or(slice.len())
+}
+
+fn parse_int(slice: &[u8]) -> u32 {
+   use std::str::from_utf8;
+   from_utf8(slice).ok().and_then(|s| s.parse::<u32>().ok()).unwrap_or(0)
+}
+
+pub fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
+    let a = a.as_bytes();
+    let b = b.as_bytes();
+
+    let mut pos_a = 0;
+    let mut pos_b = 0;
+    while pos_a < a.len() || pos_b < b.len() {
+       // Compare alphabetical sections
+       {
+           let end_alpha_a = position(a, pos_a, u8::is_ascii_digit);
+           let end_alpha_b = position(b, pos_b, u8::is_ascii_digit);
+           match compare_alpha(&a[pos_a .. end_alpha_a], &b[pos_b .. end_alpha_b]) {
+               Ordering::Equal => {},
+               o => return o,
+           }
+           pos_a = end_alpha_a;
+           pos_b = end_alpha_b;
+        }
+
+       // Compare numerical sections
+       {
+           let end_num_a = position(a, pos_a, |c| !c.is_ascii_digit());
+           let end_num_b = position(b, pos_b, |c| !c.is_ascii_digit());
+           let num_a = parse_int(&a[pos_a .. end_num_a]);
+           let num_b = parse_int(&b[pos_b .. end_num_b]);
+           match num_a.cmp(&num_b) {
+               Ordering::Equal => {},
+               o => return o,
+           }
+           pos_a = end_num_a;
+           pos_b = end_num_b;
+        }
+    }
+    Ordering::Equal
+}
+
 #[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
 
+    use crate::Version;
     use super::{CHAR_ORDER, compare_alpha};
-
 
     struct PrioSetter {
         prio: u8,
@@ -143,5 +189,16 @@ mod tests {
         // Tilde comes before end
         assert_eq!(compare_alpha(b"te~", b"te"), Ordering::Less);
         assert_eq!(compare_alpha(b"te", b"te~"), Ordering::Greater);
+    }
+
+    #[test]
+    fn test_compare_versions() {
+        assert!(Version("".into()) == Version("".into()));
+        assert!(Version("1.2".into()) == Version("1.2".into()));
+        assert!(Version("1.2".into()) < Version("1.2.0".into()));
+        assert!(Version("1.3.1".into()) > Version("1.1.3".into()));
+        assert!(Version("1.1.3".into()) < Version("1.3.1".into()));
+        assert!(Version("1.1~rc1".into()) < Version("1.1".into()));
+        assert!(Version("1.1-fix1".into()) > Version("1.1".into()));
     }
 }

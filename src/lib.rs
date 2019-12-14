@@ -9,7 +9,7 @@ use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
 
-use cmp::CHAR_ORDER;
+use cmp::{CHAR_ORDER, compare_versions};
 
 /// A version number.
 #[derive(Clone, Debug, Hash)]
@@ -45,7 +45,7 @@ impl PartialOrd<Version> for Version {
 
 impl Ord for Version {
     fn cmp(&self, other: &Version) -> Ordering {
-        unimplemented!() // TODO: Compare versions
+        compare_versions(&self.0, &other.0)
     }
 }
 
