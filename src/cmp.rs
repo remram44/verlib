@@ -31,10 +31,7 @@ pub const CHAR_ORDER: &'static [u8] = &[
 /// `""`, `"a"`.
 ///
 /// See https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
-pub fn compare_alpha(a: &str, b: &str) -> std::cmp::Ordering {
-    let a = a.as_bytes();
-    let b = b.as_bytes();
-
+fn compare_alpha(a: &[u8], b: &[u8]) -> std::cmp::Ordering {
     // Compare characters using the CHAR_ORDER array
     for (&ca, &cb) in a.iter().zip(b.iter()) {
         let pa = CHAR_ORDER[usize::from(ca)];
@@ -124,27 +121,27 @@ mod tests {
     #[test]
     fn test_compare_alpha() {
         // Equal
-        assert_eq!(compare_alpha("test", "test"), Ordering::Equal);
-        assert_eq!(compare_alpha("", ""), Ordering::Equal);
+        assert_eq!(compare_alpha(b"test", b"test"), Ordering::Equal);
+        assert_eq!(compare_alpha(b"", b""), Ordering::Equal);
         // Ordering
-        assert_eq!(compare_alpha("t1", "t2"), Ordering::Less);
-        assert_eq!(compare_alpha("t2", "t1"), Ordering::Greater);
-        assert_eq!(compare_alpha("t133", "t2"), Ordering::Less);
-        assert_eq!(compare_alpha("t2", "t133"), Ordering::Greater);
-        assert_eq!(compare_alpha("ta", "tb"), Ordering::Less);
-        assert_eq!(compare_alpha("tb", "ta"), Ordering::Greater);
-        assert_eq!(compare_alpha("tz", "test"), Ordering::Greater);
-        assert_eq!(compare_alpha("test", "tz"), Ordering::Less);
+        assert_eq!(compare_alpha(b"t1", b"t2"), Ordering::Less);
+        assert_eq!(compare_alpha(b"t2", b"t1"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"t133", b"t2"), Ordering::Less);
+        assert_eq!(compare_alpha(b"t2", b"t133"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"ta", b"tb"), Ordering::Less);
+        assert_eq!(compare_alpha(b"tb", b"ta"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"tz", b"test"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"test", b"tz"), Ordering::Less);
         // Letters come before numbers
-        assert_eq!(compare_alpha("test", "te5t"), Ordering::Less);
-        assert_eq!(compare_alpha("te5t", "test"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"test", b"te5t"), Ordering::Less);
+        assert_eq!(compare_alpha(b"te5t", b"test"), Ordering::Greater);
         // End comes before all (but tilde)
-        assert_eq!(compare_alpha("test", "te"), Ordering::Greater);
-        assert_eq!(compare_alpha("te", "test"), Ordering::Less);
-        assert_eq!(compare_alpha("te-", "te"), Ordering::Greater);
-        assert_eq!(compare_alpha("te", "te-"), Ordering::Less);
+        assert_eq!(compare_alpha(b"test", b"te"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"te", b"test"), Ordering::Less);
+        assert_eq!(compare_alpha(b"te-", b"te"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"te", b"te-"), Ordering::Less);
         // Tilde comes before end
-        assert_eq!(compare_alpha("te~", "te"), Ordering::Less);
-        assert_eq!(compare_alpha("te", "te~"), Ordering::Greater);
+        assert_eq!(compare_alpha(b"te~", b"te"), Ordering::Less);
+        assert_eq!(compare_alpha(b"te", b"te~"), Ordering::Greater);
     }
 }
