@@ -19,10 +19,16 @@ impl Deref for DebianVersion {
 
 impl DebianVersion {
     pub fn upstream_version(&self) -> &str {
-        unimplemented!() // TODO: Read until last hyphen
+        match self.rfind('-') {
+            Some(hyphen) => &self[0..hyphen],
+            None => &self
+        }
     }
 
     pub fn debian_revision(&self) -> Option<&str> {
-        unimplemented!() // TODO: Read from last hyphen
+        match self.rfind('-') {
+            Some(hyphen) => Some(&self[hyphen + 1 ..]),
+            None => None
+        }
     }
 }
