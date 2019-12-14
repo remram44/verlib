@@ -1,6 +1,12 @@
+pub mod debian;
+pub mod python;
+pub mod semver;
+mod utils;
+
 use std::cmp::{Ordering, PartialOrd};
-use std::fmt::{self, Write};
-use std::str::FromStr;
+use std::convert::TryFrom;
+use std::fmt;
+use std::ops::Deref;
 
 const CHAR_ORDER: &'static [u8] = &[
     255u8, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -22,7 +28,7 @@ const CHAR_ORDER: &'static [u8] = &[
     255, 255, 255, 255, 255, 255, 255, 255,
 ];
 
-/// Modified string comparison
+/// Modified string comparison.
 ///
 /// Compares ASCII strings using the following rules:
 ///
@@ -68,125 +74,71 @@ pub fn compare_alpha(a: &str, b: &str) -> std::cmp::Ordering {
     }
 }
 
-/// Number type used for numeric fields
-pub type Number = u32;
+/// A version number.
+#[derive(Clone, Debug, Hash)]
+pub struct Version(String);
 
-/// A single field in a version, either a number of alphanumerical string
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Field {
-    Alpha(String),
-    Num(Number),
-}
+impl Deref for Version {
+    type Target = str;
 
-impl fmt::Display for Field {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Field::Alpha(s) => write!(f, "{}", s),
-            Field::Num(n) => write!(f, "{}", n),
-        }
-    }
-}
-
-/// A version number, including pre- and post- release parts
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Version {
-    pub epoch: Number,
-    pub version: Vec<u32>,
-    pub pre: Vec<Field>,
-    pub post: Vec<Field>,
-}
-
-/// The version is not supported by semver
-pub enum ToSemverError {
-    HasEpoch,
-    HasPost,
-    TooManyFields,
-}
-
-impl Version {
-    /// Get the version in semver format `version-pre`, if no post-release info
-    pub fn to_semver(&self) -> Result<String, ToSemverError> {
-        if self.epoch != 0 {
-            Err(ToSemverError::HasEpoch)
-        } else if !self.post.is_empty() {
-            Err(ToSemverError::HasPost)
-        } else if self.version.len() > 3 {
-            Err(ToSemverError::TooManyFields)
-        } else {
-            let mut version = String::new();
-            for (i, field) in self.version.iter().enumerate() {
-                if i > 0 {
-                    version.push('.');
-                }
-                write!(version, "{}", field).unwrap();
-            }
-            if !self.pre.is_empty() {
-                version.push('-');
-                for (i, field) in self.pre.iter().enumerate() {
-                    if i > 0 {
-                        version.push('.');
-                    }
-                    write!(version, "{}", field).unwrap();
-                }
-            }
-            Ok(version)
-        }
+    fn deref(&self) -> &str {
+        &self.0
     }
 }
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.epoch > 0 {
-            write!(f, "{}:", self.epoch)?;
-        }
-        for (i, field) in self.version.iter().enumerate() {
-            if i > 0 {
-                write!(f, ".")?;
-            }
-            write!(f, "{}", field)?;
-        }
-        if self.version.is_empty() {
-            write!(f, "0")?;
-        }
-        for field in self.pre.iter().chain(self.post.iter()) {
-            write!(f, ".{}", field)?;
-        }
-        Ok(())
+        write!(f, "{}", self.0)
     }
 }
 
-impl PartialOrd for Version {
+impl PartialEq<Version> for Version {
+    fn eq(&self, other: &Version) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl Eq for Version {}
+
+impl PartialOrd<Version> for Version {
     fn partial_cmp(&self, other: &Version) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Version {
+    fn cmp(&self, other: &Version) -> Ordering {
         unimplemented!() // TODO: Compare versions
     }
 }
 
-/// Error parsing the version string
-pub enum ParseVersionError {
+pub enum InvalidVersion {
+    InvalidCharacter,
+    LeadingZero,
 }
 
-impl FromStr for Field {
-    type Err = ParseVersionError;
+impl TryFrom<String> for Version {
+    type Error = InvalidVersion;
 
-    fn from_str(field: &str) -> Result<Field, ParseVersionError> {
-        unimplemented!() // TODO: Parse field
+    fn try_from(string: String) -> Result<Version, InvalidVersion> {
+        for c in string.bytes() {
+            // Check characters are allowed
+            if CHAR_ORDER[usize::from(c)] == 255 {
+                return Err(InvalidVersion::InvalidCharacter);
+            }
+        }
+        Ok(Version(string))
     }
 }
 
-impl FromStr for Version {
-    type Err = ParseVersionError;
+/// A simple version number (only numbers and dots).
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SimpleVersion(Version);
 
-    fn from_str(version: &str) -> Result<Version, ParseVersionError> {
-        unimplemented!() // TODO: Parse version
+impl AsRef<Version> for SimpleVersion {
+    fn as_ref(&self) -> &Version {
+        &self.0
     }
-}
-
-pub fn parse_final(version: &str) -> Result<Version, ParseVersionError> {
-    unimplemented!() // TODO: Parse simple version
-}
-
-pub fn from_semver(version: &str) -> Result<Version, ParseVersionError> {
-    unimplemented!() // TODO: Parse semver version
 }
 
 #[cfg(test)]
