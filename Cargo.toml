@@ -2,7 +2,7 @@
 name = "verlib"
 version = "0.1.0"
 authors = ["Remi Rampin <r@remirampin.com>"]
-description = "Parser for verlib, the better version standard from PEP-440"
+description = "Parser for various versioning schemes"
 repository = "https://github.com/remram44/verlib-rs"
 license = "MIT"
 
