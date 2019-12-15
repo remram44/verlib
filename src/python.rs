@@ -10,5 +10,5 @@
 //! `post`, `dev`, `rc``, `a` (for alpha), and `b` (for beta).
 
 /// A PEP-440-compliant Python version number.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct PythonVersion(String);

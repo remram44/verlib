@@ -105,6 +105,8 @@ pub fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
     let a = a.as_bytes();
     let b = b.as_bytes();
 
+    // FIXME: Epoch first
+
     let mut pos_a = 0;
     let mut pos_b = 0;
     while pos_a < a.len() || pos_b < b.len() {

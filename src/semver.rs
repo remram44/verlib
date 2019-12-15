@@ -156,7 +156,7 @@ impl ToSemver for Version {
     /// * `1.2.4~rc1` -> `1.2.4-rc.1`
     /// * `2:1.2.2` -> `1.2.2`
     fn to_semver_lossy(&self) -> SemverVersion {
-        unimplemented!() // TODO: Version to SimpleVersion lossy
+        unimplemented!() // TODO: Version to SemverVersion lossy
             // Put post-release info in local version, etc
     }
 }

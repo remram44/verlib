@@ -87,6 +87,12 @@ impl Ord for Version {
     }
 }
 
+impl Version {
+    pub fn epoch() -> u32 {
+        unimplemented!() // TODO: Read epoch (default to 0)
+    }
+}
+
 /// Error for the version parser.
 pub enum InvalidVersion {
     /// The version contains invalid characters.
