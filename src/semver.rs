@@ -1,3 +1,28 @@
+//! Implements semver.org's so-called Semantic Versioning scheme.
+//!
+//! [semver.org](https://semver.org/) offers a set of guidelines for a
+//! versioning scheme that gives "semantic" to versions, with the goal of
+//! standardizing how versions are incremented. The goal is to allow a software
+//! author to express a dependency on a library such that updating it is
+//! possible (to fix bugs) but won't break the program (only compatible
+//! versions will be considered).
+//!
+//! While it is similar to version numbers used previously, it is much stricter
+//! by design (a version number is three numbers `major.minor.patch`, with
+//! specific meaning) and overly simple (it doesn't allow for epochs,
+//! post-releases, or third-party packaging). It is also incompatible with a
+//! lot of popular versioning scheme already deployed, such as
+//! Debian's/Ubuntu's, Git (the output of `git describe`), Python (which always
+//! featured post-releases), etc.
+//!
+//! However a lot of package managers expect semver to be used, and those
+//! version numbers should be parsed as such.
+//!
+//! The unusual characteristics of semver is that version numbers MUST be three
+//! numbers (though requirement specifiers don't need to be), and that a dash
+//! indicates a pre-release always (there is no way to specify a post-release
+//! or build number).
+
 use std::convert::TryFrom;
 use std::fmt;
 

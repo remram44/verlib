@@ -1,3 +1,5 @@
+//! Provides the comparison logic for the `Version`.
+
 use std::cmp::Ordering;
 
 pub const CHAR_ORDER: &'static [u8] = &[
@@ -73,6 +75,32 @@ fn parse_int(slice: &[u8]) -> u32 {
    from_utf8(slice).ok().and_then(|s| s.parse::<u32>().ok()).unwrap_or(0)
 }
 
+/// Compare version strings.
+///
+/// This follows [Debian's algorithm][deb]:
+///
+/// [deb]: https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
+///
+/// First the epoch of each are compared. If they are equal, the strings are
+/// compared from left to right as follows:
+///
+/// First the initial part of each string consisting entirely of non-digit
+/// characters is determined. These two parts (one of which may be empty) are
+/// compared lexically. If a difference is found it is returned. The lexical
+/// comparison is a comparison of ASCII values modified so that all the letters
+/// sort earlier than all the non-letters and so that a tilde sorts before
+/// anything, even the end of a part. For example, the following parts are in
+/// sorted order from earliest to latest: ~~, ~~a, ~, the empty part, a. [7]
+///
+/// Then the initial part of the remainder of each string which consists
+/// entirely of digit characters is determined. The numerical values of these
+/// two parts are compared, and any difference found is returned as the result
+/// of the comparison. For these purposes an empty string (which can only occur
+/// at the end of one or both version strings being compared) counts as zero.
+///
+/// These two steps (comparing and removing initial non-digit strings and
+/// initial digit strings) are repeated until a difference is found or both
+/// strings are exhausted.
 pub fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
     let a = a.as_bytes();
     let b = b.as_bytes();
