@@ -48,6 +48,7 @@ use std::fmt;
 use std::ops::Deref;
 
 use cmp::{CHAR_ORDER, compare_versions};
+use utils::NumChecker;
 
 /// A version number.
 #[derive(Clone, Debug, Hash)]
@@ -99,6 +100,8 @@ pub enum InvalidVersion {
     InvalidCharacter,
     /// The version number contains numeric fields with a leading zero.
     LeadingZero,
+    /// Empty field (for example, two consecutive dots).
+    EmptyField,
     #[doc(hidden)]
     __Nonexhaustive,
 }
@@ -128,5 +131,30 @@ pub struct SimpleVersion(Version);
 impl AsRef<Version> for SimpleVersion {
     fn as_ref(&self) -> &Version {
         &self.0
+    }
+}
+
+impl TryFrom<String> for SimpleVersion {
+    type Error = InvalidVersion;
+
+    fn try_from(string: String) -> Result<SimpleVersion, InvalidVersion> {
+        let mut num_check = NumChecker::new();
+        // Check characters are allowed
+        for c in string.bytes() {
+            if c == b'.' {
+                if num_check == NumChecker::Start {
+                    return Err(InvalidVersion::EmptyField);
+                }
+            } else if c < b'0' || b'9' < c {
+                return Err(InvalidVersion::InvalidCharacter);
+            }
+            if !num_check.check(c) {
+                return Err(InvalidVersion::LeadingZero);
+            }
+        }
+        if num_check == NumChecker::Start {
+            return Err(InvalidVersion::EmptyField);
+        }
+        Ok(SimpleVersion(Version(string)))
     }
 }
