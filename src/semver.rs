@@ -49,7 +49,7 @@ pub enum ToSemverError {
     InvalidCharacter,
 }
 
-trait ToSemver {
+pub trait ToSemver {
     /// Convert if the version is a valid semver.
     fn to_semver(&self) -> Result<SemverVersion, ToSemverError>;
 
